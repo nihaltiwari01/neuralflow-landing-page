@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NeuralFlow — The next-generation AI data automation platform." />
+  
+  <title>NeuralFlow — AI-Driven Data Automation Platform</title>
+
+  <!-- Fonts: Strictly mapped to Hackathon PDF rules -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            arctic: '#F1F6F4',
+            mint: '#D9E8E2',
+            forsythia: '#FFC801',
+            saffron: '#FF9932',
+            nocturnal: '#114C5A',
+            oceanic: '#172B36',
+            // Adding missing surface & background mappings to fix invisible text
+            bg: '#172B36',
+            surface: '#114C5A',
+            'surface-2': '#1A3340',
+            green: '#34D399',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ===========================
+       CSS CUSTOM PROPERTIES
+    =========================== */
+    :root {
+      --color-bg:          #172B36; 
+      --color-surface:     #114C5A; 
+      --color-surface-2:   #1A3340; 
+      --color-border:      rgba(241, 246, 244, 0.15); 
+      --color-text:        #F1F6F4; 
+      --color-text-muted:  #D9E8E2; 
+      --color-text-faint:  rgba(217, 232, 226, 0.6); 
+      --color-accent:      #FFC801; 
+      --color-accent-glow: rgba(255, 200, 1, 0.35);
+      --color-accent-2:    #FF9932; 
+      --color-green:       #34D399;
+
+      --font-display: 'JetBrains Mono', monospace;
+      --font-body:    'Inter', system-ui, sans-serif;
+
+      --radius-sm:  6px;
+      --radius-md:  12px;
+      --radius-lg:  20px;
+      --radius-xl:  32px;
+
+      --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-inout:  cubic-bezier(0.45, 0, 0.55, 1);
+      --dur-micro:   175ms; 
+      --dur-layout:  350ms; 
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===========================
+       INITIAL LOADER (< 500ms constraint)
+    =========================== */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--color-bg);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: loaderFade 0.25s var(--ease-out) 0.2s forwards;
+    }
+    @keyframes loaderFade {
+      to { opacity: 0; pointer-events: none; }
+    }
+    .loader-ring {
+      width: 48px;
+      height: 48px;
+      border: 2px solid var(--color-border);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      animation: revealUp 0.6s var(--ease-out) forwards;
+    }
+    .reveal-d1 { animation-delay: 0.08s; }
+    .reveal-d2 { animation-delay: 0.16s; }
+    .reveal-d3 { animation-delay: 0.24s; }
+
+    @keyframes revealUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dot-grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255, 200, 1, 0.15) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+      pointer-events: none;
+    }
+    .dot-grid-square {
+      background-image: linear-gradient(rgba(241, 246, 244, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(241, 246, 244, 0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: transform var(--dur-micro) var(--ease-out), background var(--dur-micro) var(--ease-out);
+    }
+    .btn-ghost { background: transparent; color: var(--color-text-muted); border: 1px solid var(--color-border); }
+    .btn-ghost:hover { color: var(--color-text); border-color: var(--color-accent); transform: translateY(-1px); }
+    .btn-primary { background: var(--color-accent); color: var(--color-bg); }
+    .btn-primary:hover { background: #FFD533; transform: translateY(-1px); box-shadow: 0 8px 24px var(--color-accent-glow); }
+
+    /* Bento & Accordions */
+    .bento-node {
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--dur-micro) var(--ease-out), transform var(--dur-layout) var(--ease-inout);
+    }
+    .bento-node:hover, .bento-node.active {
+      border-color: rgba(255, 200, 1, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height var(--dur-layout) var(--ease-inout), padding var(--dur-layout) var(--ease-inout);
+    }
+    .accordion-item.open .accordion-body { max-height: 500px; }
+    .accordion-item.open .acc-arrow { transform: rotate(180deg); }
+    .acc-arrow { transition: transform var(--dur-layout) var(--ease-inout); }
+
+    /* Custom Animations for Charts */
+    @keyframes drawWave {
+      0% { stroke-dashoffset: 1000; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .animate-wave {
+      stroke-dasharray: 1000;
+      animation: drawWave 15s linear infinite backwards;
+    }
+    @keyframes fillGauge {
+      0% { stroke-dasharray: 0, 100; }
+    }
+    .gauge-fill { animation: fillGauge 1.5s var(--ease-out) forwards; }
+
+    /* Scroll Reveal Utilities */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+    }
+    .scroll-reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .delay-100 { transition-delay: 100ms; }
+    .delay-200 { transition-delay: 200ms; }
+    .delay-300 { transition-delay: 300ms; }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader" role="status" aria-label="Loading NeuralFlow">
+    <div class="loader-ring"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header role="banner" class="fixed w-full top-0 z-50 bg-oceanic/90 backdrop-blur-md border-b border-arctic/15 transition-all duration-300">
+    <div class="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 font-mono font-bold text-[1.2rem] tracking-tight text-arctic">
+        <span class="w-[30px] h-[30px] flex items-center justify-center">
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="8" fill="rgba(255,200,1,0.1)"/><path d="M9 15 L13 11 L17 15 L21 11" stroke="var(--color-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 20 L13 16 L17 20 L21 16" stroke="var(--color-accent-2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/><circle cx="9" cy="15" r="1.5" fill="var(--color-accent)"/><circle cx="21" cy="11" r="1.5" fill="var(--color-accent)"/></svg>
+        </span>
+        NeuralFlow
+      </div>
+      <nav class="hidden md:flex items-center gap-8">
+        <a href="#dashboard" class="text-sm font-medium text-mint hover:text-arctic transition-colors">Telemetry</a>
+        <a href="#features" class="text-sm font-medium text-mint hover:text-arctic transition-colors">Features</a>
+        <a href="#pricing" class="text-sm font-medium text-mint hover:text-arctic transition-colors">Pricing</a>
+        <a href="#faq" class="text-sm font-medium text-mint hover:text-arctic transition-colors">FAQ</a>
+      </nav>
+      <div class="hidden md:flex items-center gap-3">
+        <button class="btn btn-ghost" type="button">Sign in</button>
+        <button class="btn btn-primary" type="button">Start free</button>
+      </div>
+      <button id="mobile-menu-toggle" class="md:hidden text-arctic p-2 focus:outline-none" aria-label="Toggle mobile menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="nav-menu" class="absolute top-16 left-0 w-full bg-oceanic/95 backdrop-blur-xl border-b border-arctic/15 flex flex-col gap-6 p-6 opacity-0 invisible -translate-y-4 transition-all duration-300 md:hidden shadow-2xl">
+      <nav class="flex flex-col gap-4">
+        <a href="#dashboard" class="text-base font-medium text-mint hover:text-forsythia transition-colors">Telemetry</a>
+        <a href="#features" class="text-base font-medium text-mint hover:text-forsythia transition-colors">Features</a>
+        <a href="#pricing" class="text-base font-medium text-mint hover:text-forsythia transition-colors">Pricing</a>
+        <a href="#faq" class="text-base font-medium text-mint hover:text-forsythia transition-colors">FAQ</a>
+      </nav>
+      <div class="flex flex-col gap-4 pt-4 border-t border-arctic/10">
+        <button class="btn btn-ghost w-full justify-center" type="button">Sign in</button>
+        <button class="btn btn-primary w-full justify-center" type="button">Start free</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+
+    <!-- HERO -->
+    <section class="relative min-h-screen flex flex-col items-center justify-center text-center px-6 pt-32 pb-20 overflow-hidden">
+      <div class="dot-grid" aria-hidden="true"></div>
+      <div class="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(255,200,1,0.12)_0%,transparent_70%)] pointer-events-none"></div>
+
+      <div class="badge reveal reveal-d1">
+        <span class="badge-dot" aria-hidden="true"></span>
+        Now in public beta — v2.4 released
+      </div>
+
+      <h1 class="font-mono text-4xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tighter max-w-[820px] mb-6 reveal reveal-d2">
+        Intelligence that moves<br/>
+        <span class="bg-gradient-to-r from-forsythia to-saffron bg-clip-text text-transparent">at machine speed</span>
+      </h1>
+
+      <p class="text-mint/80 text-lg md:text-xl max-w-[560px] leading-relaxed mb-10 reveal reveal-d3">
+        NeuralFlow automates your data pipelines, surfaces real-time insights, and scales AI reasoning across every layer of your infrastructure.
+      </p>
+
+      <div class="flex items-center justify-center gap-4 flex-wrap reveal reveal-d3">
+        <button class="btn btn-primary px-8 py-4 text-base" type="button">Get started free</button>
+        <button class="btn btn-ghost px-8 py-4 text-base" type="button">Watch demo</button>
+      </div>
+    </section>
+
+    <!-- NEW SECTION: PRODUCT STATISTICS / TELEMETRY DASHBOARD -->
+    <section id="dashboard" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-arctic/10">
+      <div class="mb-16 scroll-reveal">
+        <p class="font-mono text-xs font-semibold tracking-widest text-saffron uppercase mb-4">Product Statistics</p>
+        <h2 class="font-mono text-3xl md:text-4xl font-bold tracking-tight mb-4">Optimized for performance</h2>
+        <p class="text-mint/70 max-w-2xl">Monitor every neural pulse in real-time. Armory provides deep telemetry into agent accuracy, server latency, and token efficiency.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Metric 1: System Load -->
+        <div class="bg-surface-2/40 border border-arctic/10 rounded-2xl p-8 flex flex-col justify-between scroll-reveal">
+          <div>
+            <div class="flex items-center gap-2 font-mono text-arctic mb-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/></svg> System Load
+            </div>
+            <p class="text-xs text-mint/50 font-mono mb-8">Active neural processing</p>
+          </div>
+          <div class="relative w-40 h-40 mx-auto">
+            <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+              <path class="text-arctic/10" stroke-width="3" stroke="currentColor" fill="none" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path id="stat-load-gauge" class="text-forsythia transition-all duration-700 ease-out" stroke-width="3" stroke="currentColor" fill="none" stroke-dasharray="45, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="stat-load-val" class="font-mono text-4xl font-bold text-arctic">7</span>
+              <span class="text-[10px] text-mint/50 font-mono tracking-widest">Core Systems</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric 2: SLA Response -->
+        <div class="bg-surface-2/40 border border-arctic/10 rounded-2xl p-8 flex flex-col justify-between scroll-reveal delay-100">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <div class="flex items-center gap-2 font-mono text-arctic mb-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg> SLA Response
+              </div>
+              <p class="text-xs text-mint/50 font-mono">Global uptime monitoring</p>
+            </div>
+            <span id="stat-sla-val" class="font-mono text-saffron text-sm transition-all duration-300">99.99%</span>
+          </div>
+          <div class="h-32 flex items-end justify-between gap-2 border-b border-arctic/20 pb-2 relative">
+            <div class="w-full border-t border-dashed border-arctic/20 absolute bottom-8"></div>
+            <!-- Bars -->
+            <div id="sla-bar-1" class="w-1/6 bg-arctic/20 h-[40%] rounded-t relative transition-all duration-700 ease-in-out"><div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-mint"></div></div>
+            <div id="sla-bar-2" class="w-1/6 bg-arctic/20 h-[60%] rounded-t relative transition-all duration-700 ease-in-out"><div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-mint"></div></div>
+            <div id="sla-bar-3" class="w-1/6 bg-forsythia/80 h-[90%] rounded-t relative transition-all duration-700 ease-in-out"><div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-forsythia shadow-[0_0_10px_#FFC801]"></div></div>
+            <div id="sla-bar-4" class="w-1/6 bg-arctic/20 h-[30%] rounded-t relative transition-all duration-700 ease-in-out"><div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-mint"></div></div>
+            <div id="sla-bar-5" class="w-1/6 bg-arctic/20 h-[10%] rounded-t relative transition-all duration-700 ease-in-out"><div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-mint"></div></div>
+          </div>
+        </div>
+
+        <!-- Metric 3: Token Usage -->
+        <div class="bg-surface-2/40 border border-arctic/10 rounded-2xl p-8 flex flex-col justify-between scroll-reveal delay-200">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <div class="flex items-center gap-2 font-mono text-arctic mb-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Token Usage
+              </div>
+              <p class="text-xs text-mint/50 font-mono">Monthly volume throughput</p>
+            </div>
+            <span id="stat-token-val" class="font-mono text-mint/70 text-sm transition-all duration-300">8.40M</span>
+          </div>
+          <div class="relative w-40 h-40 mx-auto overflow-hidden">
+            <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-[135deg]">
+              <path class="text-arctic/10" stroke-width="4" stroke="currentColor" fill="none" stroke-dasharray="75, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path id="stat-token-gauge" class="text-arctic transition-all duration-700 ease-out" stroke-width="4" stroke="currentColor" fill="none" stroke-dasharray="45, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center pt-4">
+              <span id="stat-query-val" class="font-mono text-4xl font-bold text-arctic transition-all duration-300">149</span>
+              <span class="text-[10px] text-mint/50 font-mono tracking-widest uppercase">Total Queries</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES: BENTO ↔ ACCORDION -->
+    <section id="features" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-arctic/10">
+      <div class="mb-16 text-center scroll-reveal">
+        <p class="font-mono text-xs font-semibold tracking-widest text-saffron uppercase mb-4">Platform capabilities</p>
+        <h2 class="font-mono text-3xl md:text-4xl font-bold tracking-tight mb-4">Built for the speed of modern data</h2>
+        <p class="text-mint/70 max-w-2xl mx-auto">Every component is designed to handle enterprise-scale workloads with zero compromise on latency or reliability.</p>
+      </div>
+
+      <!-- BENTO (Desktop) -->
+      <div id="bento-grid" class="hidden md:grid grid-cols-3 gap-4">
+        <article class="bento-node col-span-2 group scroll-reveal" data-index="0">
+          <div class="w-12 h-12 bg-forsythia/10 border border-forsythia/20 rounded-xl flex items-center justify-center mb-5 text-forsythia"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+          <h3 class="font-mono text-lg font-bold mb-2">Real-time Inference Engine</h3>
+          <p class="text-mint/70 text-sm mb-4">Sub-12ms inference on your models with auto-scaling burst capacity. Handles traffic spikes without cold starts.</p>
+          <span class="text-[11px] font-mono bg-forsythia/10 text-forsythia px-3 py-1 rounded-full border border-forsythia/20">12ms P99 latency</span>
+        </article>
+
+        <article class="bento-node group scroll-reveal delay-100" data-index="1">
+          <div class="w-12 h-12 bg-forsythia/10 border border-forsythia/20 rounded-xl flex items-center justify-center mb-5 text-forsythia"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg></div>
+          <h3 class="font-mono text-lg font-bold mb-2">Multi-modal Pipelines</h3>
+          <p class="text-mint/70 text-sm">Chain vision, language, audio, and structured data models in a single declarative graph. No glue code.</p>
+        </article>
+
+        <article class="bento-node group scroll-reveal" data-index="2">
+          <div class="w-12 h-12 bg-forsythia/10 border border-forsythia/20 rounded-xl flex items-center justify-center mb-5 text-forsythia"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg></div>
+          <h3 class="font-mono text-lg font-bold mb-2">Adaptive Caching</h3>
+          <p class="text-mint/70 text-sm">Semantic KV caching that learns your query patterns, cutting compute costs by up to 70% automatically.</p>
+        </article>
+
+        <article class="bento-node col-span-2 group scroll-reveal delay-100" data-index="3">
+          <div class="w-12 h-12 bg-forsythia/10 border border-forsythia/20 rounded-xl flex items-center justify-center mb-5 text-forsythia"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l4-6 4 4 4-8 4 5"/><circle cx="3" cy="17" r="1.5"/><circle cx="7" cy="11" r="1.5"/><circle cx="11" cy="15" r="1.5"/><circle cx="15" cy="7" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg></div>
+          <h3 class="font-mono text-lg font-bold mb-2">Full-Stack Observability Suite</h3>
+          <p class="text-mint/70 text-sm mb-4">Trace every token from request to response. Latency histograms, error rates, and drift detection pre-wired.</p>
+          <span class="text-[11px] font-mono bg-forsythia/10 text-forsythia px-3 py-1 rounded-full border border-forsythia/20">Zero instrumentation</span>
+        </article>
+      </div>
+
+      <!-- ACCORDION (Mobile) -->
+      <div id="accordion-list" class="md:hidden flex flex-col gap-3">
+        <div class="accordion-item border border-arctic/15 rounded-xl bg-surface-2" data-index="0">
+          <button class="accordion-trigger w-full p-5 flex items-center justify-between text-left font-mono font-bold text-sm">
+            <span class="flex items-center gap-3"><svg class="text-forsythia" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> Real-time Inference</span>
+            <svg class="acc-arrow w-5 h-5 text-mint/50" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body px-5 pb-5 text-sm text-mint/70 border-t border-arctic/10 mt-2 pt-4">Sub-12ms inference on your models with auto-scaling burst capacity. Handles traffic spikes without cold starts.</div>
+        </div>
+        <div class="accordion-item border border-arctic/15 rounded-xl bg-surface-2" data-index="1">
+          <button class="accordion-trigger w-full p-5 flex items-center justify-between text-left font-mono font-bold text-sm">
+            <span class="flex items-center gap-3"><svg class="text-forsythia" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg> Multi-modal Pipelines</span>
+            <svg class="acc-arrow w-5 h-5 text-mint/50" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body px-5 pb-5 text-sm text-mint/70 border-t border-arctic/10 mt-2 pt-4">Chain vision, language, audio, and structured data models in a single declarative graph. No glue code required.</div>
+        </div>
+        <div class="accordion-item border border-arctic/15 rounded-xl bg-surface-2" data-index="2">
+          <button class="accordion-trigger w-full p-5 flex items-center justify-between text-left font-mono font-bold text-sm">
+            <span class="flex items-center gap-3"><svg class="text-forsythia" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6"/><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg> Adaptive Caching</span>
+            <svg class="acc-arrow w-5 h-5 text-mint/50" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body px-5 pb-5 text-sm text-mint/70 border-t border-arctic/10 mt-2 pt-4">Semantic KV caching that learns your query patterns, cutting compute costs by up to 70% automatically.</div>
+        </div>
+        <div class="accordion-item border border-arctic/15 rounded-xl bg-surface-2" data-index="3">
+          <button class="accordion-trigger w-full p-5 flex items-center justify-between text-left font-mono font-bold text-sm">
+            <span class="flex items-center gap-3"><svg class="text-forsythia" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l4-6 4 4 4-8 4 5"/><circle cx="3" cy="17" r="1.5"/><circle cx="7" cy="11" r="1.5"/><circle cx="11" cy="15" r="1.5"/><circle cx="15" cy="7" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg> Full Observability</span>
+            <svg class="acc-arrow w-5 h-5 text-mint/50" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="accordion-body px-5 pb-5 text-sm text-mint/70 border-t border-arctic/10 mt-2 pt-4">Trace every token from request to response. Latency histograms, error rates, and drift detection are pre-wired.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW SECTION: GROWTH VECTOR CHART -->
+    <section class="border-y border-arctic/10 bg-surface-2/20 relative overflow-hidden">
+      <div class="dot-grid-square absolute inset-0 z-0 opacity-40"></div>
+      <div class="max-w-[1200px] mx-auto px-6 py-20 relative z-10 flex flex-col md:flex-row items-center gap-12">
+        <div class="md:w-1/3 flex flex-col items-start scroll-reveal">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-8 h-8 bg-arctic text-bg flex items-center justify-center rounded"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+            <h3 class="font-mono font-bold">Growth Vector</h3>
+          </div>
+          <p class="text-sm text-mint/60 mb-6">Efficiency gains over 30 days</p>
+          <div class="text-6xl lg:text-7xl font-mono font-bold mb-2">82%</div>
+          <p class="text-xs font-mono tracking-widest text-mint/40 uppercase mb-12">Net Growth</p>
+          <p class="text-sm font-mono text-mint/60 mb-8">Optimizing neural<br>weights for output.</p>
+          <button class="bg-arctic text-bg px-6 py-3 font-mono text-sm font-bold hover:bg-mint transition-colors flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-bg rounded-full animate-pulse"></span> Request Demo
+          </button>
+        </div>
+        <div class="md:w-2/3 w-full h-[300px] relative scroll-reveal delay-200">
+          <!-- Animated Sine Wave SVG -->
+          <svg viewBox="0 0 800 300" class="w-full h-full" preserveAspectRatio="none">
+            <!-- Grid lines -->
+            <line x1="0" y1="75" x2="800" y2="75" stroke="rgba(241, 246, 244, 0.05)" stroke-width="1" stroke-dasharray="4,4"/>
+            <line x1="0" y1="150" x2="800" y2="150" stroke="rgba(241, 246, 244, 0.05)" stroke-width="1" stroke-dasharray="4,4"/>
+            <line x1="0" y1="225" x2="800" y2="225" stroke="rgba(241, 246, 244, 0.05)" stroke-width="1" stroke-dasharray="4,4"/>
+            <!-- Wave path -->
+            <path class="animate-wave" d="M 0 250 C 100 250, 150 150, 250 180 C 350 210, 400 80, 500 120 C 600 160, 650 40, 750 150 L 850 120" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING (Feature 1: Matrix-driven, performance-isolated) -->
+    <section id="pricing" class="max-w-[1200px] mx-auto px-6 py-20">
+      <div class="text-center mb-16 scroll-reveal">
+        <p class="font-mono text-xs font-semibold tracking-widest text-saffron uppercase mb-4">Pricing</p>
+        <h2 class="font-mono text-3xl md:text-4xl font-bold tracking-tight mb-4">Transparent, predictable</h2>
+        <p class="text-mint/70 max-w-xl mx-auto">Scale from prototype to planet-scale without renegotiating contracts.</p>
+      </div>
+
+      <!-- Controls: update ONLY isolated text nodes -->
+      <div class="flex flex-col md:flex-row items-center justify-center gap-6 mb-12 scroll-reveal delay-100">
+        <div class="flex items-center gap-3 bg-surface-2 p-1.5 rounded-full border border-arctic/10">
+          <span class="text-sm font-medium px-4 text-arctic" id="lbl-monthly">Monthly</span>
+          <button id="billing-toggle" class="w-12 h-6 bg-surface border border-arctic/20 rounded-full relative transition-colors" type="button" aria-checked="false">
+            <span class="absolute top-1 left-1 w-4 h-4 bg-arctic rounded-full transition-transform duration-200"></span>
+          </button>
+          <span class="text-sm font-medium px-4 text-mint/60 transition-colors" id="lbl-annual">Annual</span>
+        </div>
+        <div class="relative">
+          <select id="currency-select" class="appearance-none bg-surface-2 border border-arctic/20 rounded-lg py-2 pl-4 pr-10 font-mono text-sm font-bold text-arctic outline-none focus:border-forsythia cursor-pointer transition-colors">
+            <option value="USD" selected>$ USD</option>
+            <option value="EUR">€ EUR</option>
+            <option value="INR">₹ INR</option>
+          </select>
+          <svg class="absolute right-3 top-1/2 -translate-y-1/2 text-mint/50 pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Starter -->
+        <article class="bg-surface-2/50 border border-arctic/10 rounded-3xl p-8 flex flex-col hover:-translate-y-1 hover:shadow-2xl transition-all scroll-reveal">
+          <h3 class="font-mono text-xl font-bold mb-2">Starter</h3>
+          <p class="text-mint/60 text-sm mb-6 h-10">Perfect for solo engineers kicking off their first AI project.</p>
+          <div class="flex items-baseline gap-1 mb-2">
+            <span id="starter-sym" class="font-mono text-2xl text-mint/50">$</span>
+            <span id="starter-amount" class="font-mono text-5xl font-bold text-arctic">29</span>
+            <span class="text-mint/50 text-sm">/mo</span>
+          </div>
+          <p id="starter-note" class="text-xs text-forsythia/80 h-5 mb-6">&nbsp;</p>
+          <ul class="space-y-4 mb-8 flex-1">
+            <li class="flex items-start gap-3 text-sm text-mint/80"><svg class="w-5 h-5 text-green shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> 1M inference tokens</li>
+            <li class="flex items-start gap-3 text-sm text-mint/80"><svg class="w-5 h-5 text-green shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> 3 AI pipeline slots</li>
+          </ul>
+          <button class="w-full py-3 rounded-xl border border-arctic/20 text-sm font-bold font-mono hover:bg-arctic/5 transition-colors">Select Plan</button>
+        </article>
+
+        <!-- Pro -->
+        <article class="bg-gradient-to-b from-forsythia/10 to-surface-2/50 border border-forsythia/50 rounded-3xl p-8 flex flex-col relative transform md:-translate-y-4 shadow-[0_0_40px_rgba(255,200,1,0.05)] hover:-translate-y-5 transition-all scroll-reveal delay-100">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-forsythia text-bg text-[10px] font-mono font-bold px-3 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
+          <h3 class="font-mono text-xl font-bold text-forsythia mb-2">Professional</h3>
+          <p class="text-mint/60 text-sm mb-6 h-10">The full stack for teams shipping AI-first products.</p>
+          <div class="flex items-baseline gap-1 mb-2">
+            <span id="pro-sym" class="font-mono text-2xl text-mint/50">$</span>
+            <span id="pro-amount" class="font-mono text-5xl font-bold text-arctic">99</span>
+            <span class="text-mint/50 text-sm">/mo</span>
+          </div>
+          <p id="pro-note" class="text-xs text-forsythia/80 h-5 mb-6">&nbsp;</p>
+          <ul class="space-y-4 mb-8 flex-1">
+            <li class="flex items-start gap-3 text-sm text-arctic"><svg class="w-5 h-5 text-forsythia shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> 20M inference tokens</li>
+            <li class="flex items-start gap-3 text-sm text-arctic"><svg class="w-5 h-5 text-forsythia shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Adaptive semantic caching</li>
+            <li class="flex items-start gap-3 text-sm text-arctic"><svg class="w-5 h-5 text-forsythia shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Full observability suite</li>
+          </ul>
+          <button class="w-full py-3 rounded-xl bg-forsythia text-bg text-sm font-bold font-mono hover:bg-saffron transition-colors shadow-lg shadow-forsythia/20">Start Trial</button>
+        </article>
+
+        <!-- Enterprise -->
+        <article class="bg-surface-2/50 border border-arctic/10 rounded-3xl p-8 flex flex-col hover:-translate-y-1 hover:shadow-2xl transition-all scroll-reveal delay-200">
+          <h3 class="font-mono text-xl font-bold mb-2">Enterprise</h3>
+          <p class="text-mint/60 text-sm mb-6 h-10">Custom SLAs and dedicated infrastructure.</p>
+          <div class="flex items-baseline gap-1 mb-2">
+            <span id="enterprise-sym" class="font-mono text-2xl text-mint/50">$</span>
+            <span id="enterprise-amount" class="font-mono text-5xl font-bold text-arctic">349</span>
+            <span class="text-mint/50 text-sm">/mo</span>
+          </div>
+          <p id="enterprise-note" class="text-xs text-forsythia/80 h-5 mb-6">&nbsp;</p>
+          <ul class="space-y-4 mb-8 flex-1">
+            <li class="flex items-start gap-3 text-sm text-mint/80"><svg class="w-5 h-5 text-green shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Unlimited tokens</li>
+            <li class="flex items-start gap-3 text-sm text-mint/80"><svg class="w-5 h-5 text-green shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> SOC 2, HIPAA compliance</li>
+          </ul>
+          <button class="w-full py-3 rounded-xl border border-arctic/20 text-sm font-bold font-mono hover:bg-arctic/5 transition-colors">Contact Sales</button>
+        </article>
+      </div>
+    </section>
+
+    <!-- NEW SECTION: FAQ -->
+    <section id="faq" class="max-w-[1200px] mx-auto px-6 py-20 border-t border-arctic/10">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div class="lg:col-span-4 flex flex-col items-start lg:sticky lg:top-32 h-fit scroll-reveal">
+          <div class="flex items-center gap-3 font-mono text-sm text-mint/50 tracking-widest uppercase mb-4">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg> FAQ
+          </div>
+          <h2 class="font-mono text-4xl md:text-5xl font-bold tracking-tight mb-6">Common<br>inquiries</h2>
+          <p class="text-mint/60 text-sm mb-8">Everything you need to know about deploying, scaling, and securing your neural agents with Armory. Can't find an answer?</p>
+          <button class="flex items-center font-mono text-sm font-bold border border-arctic/20 rounded hover:bg-arctic/5 transition-colors">
+            <span class="p-3 border-r border-arctic/20"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
+            <span class="px-6">Contact Us</span>
+          </button>
+        </div>
+
+        <div class="lg:col-span-8 scroll-reveal delay-200">
+          <!-- Fake Tabs -->
+          <div class="flex overflow-x-auto gap-2 border-b border-arctic/10 pb-px mb-6 scrollbar-hide">
+            <button class="px-6 py-3 font-mono text-sm font-bold text-bg bg-arctic border-b-2 border-arctic whitespace-nowrap">Overview</button>
+            <button class="px-6 py-3 font-mono text-sm font-bold text-mint/50 hover:text-arctic border-b-2 border-transparent transition-colors whitespace-nowrap">Security</button>
+            <button class="px-6 py-3 font-mono text-sm font-bold text-mint/50 hover:text-arctic border-b-2 border-transparent transition-colors whitespace-nowrap">Protocols</button>
+            <button class="px-6 py-3 font-mono text-sm font-bold text-mint/50 hover:text-arctic border-b-2 border-transparent transition-colors whitespace-nowrap">Licensing</button>
+          </div>
+
+          <!-- FAQ Accordion -->
+          <div class="flex flex-col border-t border-arctic/10" id="faq-list">
+            <div class="faq-item group">
+              <button class="faq-trigger w-full py-6 flex items-center justify-between text-left focus:outline-none">
+                <span class="flex items-center gap-4 font-mono font-bold text-arctic/90 group-hover:text-forsythia transition-colors">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="text-mint/40"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                  What is the NeuralFlow platform?
+                </span>
+                <span class="faq-icon w-6 h-6 border border-arctic/20 rounded-full flex items-center justify-center text-mint/50 transition-transform duration-300">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </span>
+              </button>
+              <div class="faq-body max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                <p class="pb-6 text-sm text-mint/70 pl-9">NeuralFlow is a specialized infrastructure for building and deploying custom AI agents. We provide the neural logic and edge nodes required to run autonomous workflows at enterprise scale.</p>
+              </div>
+            </div>
+
+            <div class="faq-item border-t border-arctic/10 group">
+              <button class="faq-trigger w-full py-6 flex items-center justify-between text-left focus:outline-none">
+                <span class="flex items-center gap-4 font-mono font-bold text-arctic/90 group-hover:text-forsythia transition-colors">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="text-mint/40"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  Who is this designed for?
+                </span>
+                <span class="faq-icon w-6 h-6 border border-arctic/20 rounded-full flex items-center justify-center text-mint/50 transition-transform duration-300">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </span>
+              </button>
+              <div class="faq-body max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                <p class="pb-6 text-sm text-mint/70 pl-9">It is engineered for data science teams and backend developers who need to scale their AI operations without managing complex Kubernetes clusters.</p>
+              </div>
+            </div>
+
+            <div class="faq-item border-t border-arctic/10 group">
+              <button class="faq-trigger w-full py-6 flex items-center justify-between text-left focus:outline-none">
+                <span class="flex items-center gap-4 font-mono font-bold text-arctic/90 group-hover:text-forsythia transition-colors">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="text-mint/40"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                  Does NeuralFlow provide pre-built agents?
+                </span>
+                <span class="faq-icon w-6 h-6 border border-arctic/20 rounded-full flex items-center justify-center text-mint/50 transition-transform duration-300">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </span>
+              </button>
+              <div class="faq-body max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                <p class="pb-6 text-sm text-mint/70 pl-9">Yes. We provide an extensive library of open-source template agents that you can fork, modify, and deploy instantly.</p>
+              </div>
+            </div>
+
+            <div class="faq-item border-y border-arctic/10 group">
+              <button class="faq-trigger w-full py-6 flex items-center justify-between text-left focus:outline-none">
+                <span class="flex items-center gap-4 font-mono font-bold text-arctic/90 group-hover:text-forsythia transition-colors">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="text-mint/40"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                  Can I use my own custom models?
+                </span>
+                <span class="faq-icon w-6 h-6 border border-arctic/20 rounded-full flex items-center justify-center text-mint/50 transition-transform duration-300">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </span>
+              </button>
+              <div class="faq-body max-h-0 overflow-hidden transition-all duration-300 ease-in-out">
+                <p class="pb-6 text-sm text-mint/70 pl-9">Absolutely. NeuralFlow supports bringing your own fine-tuned Hugging Face models via direct Docker integration.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 px-6 text-center relative overflow-hidden bg-surface">
+      <div class="absolute inset-0 dot-grid opacity-50"></div>
+      <div class="relative z-10 scroll-reveal">
+        <h2 class="font-mono text-3xl md:text-5xl font-bold tracking-tight mb-6">Your AI stack shouldn't slow you down</h2>
+        <p class="text-mint/80 max-w-lg mx-auto mb-10">Deploy your first pipeline in under 10 minutes. No credit card required for the Starter plan.</p>
+        <button class="btn btn-primary px-8 py-4 text-base">Start building free</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-arctic/10 py-12 px-6">
+    <div class="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="font-mono font-bold text-lg text-arctic">NeuralFlow</div>
+      <div class="flex gap-6 text-sm text-mint/60">
+        <a href="#" class="hover:text-arctic">Privacy</a>
+        <a href="#" class="hover:text-arctic">Terms</a>
+        <a href="#" class="hover:text-arctic">Security</a>
+      </div>
+      <p class="text-sm text-mint/40">© 2026 NeuralFlow Inc.</p>
+    </div>
+  </footer>
+
+  <script>
+    // --- 1. Pricing Matrix (Isolated DOM updates) ---
+    const PRICING = {
+      starter: { USD: { base: 29, sym: '$' }, INR: { base: 2399, sym: '₹' }, EUR: { base: 27, sym: '€' } },
+      pro: { USD: { base: 99, sym: '$' }, INR: { base: 8199, sym: '₹' }, EUR: { base: 92, sym: '€' } },
+      enterprise: { USD: { base: 349, sym: '$' }, INR: { base: 28999, sym: '₹' }, EUR: { base: 325, sym: '€' } },
+    };
+    
+    let isAnnual = false;
+    let currentCurrency = 'USD';
+
+    function updatePrices() {
+      ['starter', 'pro', 'enterprise'].forEach(tier => {
+        const { base, sym } = PRICING[tier][currentCurrency];
+        const finalPrice = isAnnual ? Math.round(base * 0.8) : base;
+        
+        document.getElementById(`${tier}-sym`).textContent = sym;
+        document.getElementById(`${tier}-amount`).textContent = finalPrice.toLocaleString();
+        
+        const noteNode = document.getElementById(`${tier}-note`);
+        noteNode.textContent = isAnnual ? `Billed annually (${sym}${Math.round(base * 12 * 0.8).toLocaleString()}/yr)` : '\u00A0';
+      });
+    }
+
+    document.getElementById('billing-toggle').addEventListener('click', (e) => {
+      isAnnual = !isAnnual;
+      const toggleBtn = e.currentTarget;
+      const thumb = toggleBtn.querySelector('span');
+      
+      toggleBtn.classList.toggle('bg-forsythia', isAnnual);
+      toggleBtn.classList.toggle('border-forsythia', isAnnual);
+      thumb.style.transform = isAnnual ? 'translateX(22px)' : 'translateX(0)';
+      
+      document.getElementById('lbl-monthly').classList.toggle('text-arctic', !isAnnual);
+      document.getElementById('lbl-monthly').classList.toggle('text-mint/60', isAnnual);
+      document.getElementById('lbl-annual').classList.toggle('text-arctic', isAnnual);
+      document.getElementById('lbl-annual').classList.toggle('text-mint/60', !isAnnual);
+      
+      updatePrices();
+    });
+
+    document.getElementById('currency-select').addEventListener('change', (e) => {
+      currentCurrency = e.target.value;
+      updatePrices();
+    });
+
+    // --- 2. Bento to Accordion (Context Lock) ---
+    let activeIndex = -1;
+    const bentoNodes = document.querySelectorAll('.bento-node');
+    const accItems = document.querySelectorAll('.accordion-item');
+
+    function syncAccordion(index) {
+      accItems.forEach((item, i) => {
+        const body = item.querySelector('.accordion-body');
+        const arrow = item.querySelector('.acc-arrow');
+        if (i === index) {
+          body.style.maxHeight = body.scrollHeight + 20 + "px";
+          arrow.style.transform = "rotate(180deg)";
+        } else {
+          body.style.maxHeight = "0px";
+          arrow.style.transform = "rotate(0deg)";
+        }
+      });
+    }
+
+    bentoNodes.forEach((node, i) => {
+      node.addEventListener('mouseenter', () => { if (window.innerWidth > 768) activeIndex = i; });
+    });
+
+    accItems.forEach((item, i) => {
+      item.querySelector('.accordion-trigger').addEventListener('click', () => {
+        activeIndex = activeIndex === i ? -1 : i;
+        syncAccordion(activeIndex);
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768 && activeIndex !== -1) syncAccordion(activeIndex);
+    });
+
+    // --- 3. FAQ Accordion Logic ---
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+      const trigger = item.querySelector('.faq-trigger');
+      trigger.addEventListener('click', () => {
+        const body = item.querySelector('.faq-body');
+        const icon = item.querySelector('.faq-icon');
+        const isOpen = body.style.maxHeight;
+
+        // Close all
+        faqItems.forEach(faq => {
+          faq.querySelector('.faq-body').style.maxHeight = null;
+          faq.querySelector('.faq-icon').innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+        });
+
+        // Open if wasn't open
+        if (!isOpen) {
+          body.style.maxHeight = body.scrollHeight + "px";
+          icon.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+        }
+      });
+    });
+
+    // --- Mobile Menu Toggle ---
+    const menuBtn = document.getElementById('mobile-menu-toggle');
+    const navMenu = document.getElementById('nav-menu');
+    menuBtn.addEventListener('click', () => {
+      const isOpen = !navMenu.classList.contains('invisible');
+      if (isOpen) {
+        navMenu.classList.add('opacity-0', 'invisible', '-translate-y-4');
+      } else {
+        navMenu.classList.remove('opacity-0', 'invisible', '-translate-y-4');
+      }
+    });
+
+    // --- 4. Dynamic Telemetry Simulation ---
+    function simulateTelemetry() {
+      // 1. System Load Simulation
+      const loadVal = Math.floor(Math.random() * 6) + 4; // Fluctuates between 4 and 9
+      document.getElementById('stat-load-val').textContent = loadVal;
+      // Convert to a percentage out of a max 12 cores
+      const loadPercentage = Math.round((loadVal / 12) * 100);
+      document.getElementById('stat-load-gauge').setAttribute('stroke-dasharray', `${loadPercentage}, 100`);
+
+      // 2. SLA Response Simulation
+      const slaBase = 99.95;
+      const slaRand = Math.random() * 0.04; // Fluctuates between 99.95% and 99.99%
+      document.getElementById('stat-sla-val').textContent = (slaBase + slaRand).toFixed(2) + '%';
+      
+      // SLA Bars (Randomized heights to simulate network ping variation)
+      for(let i=1; i<=5; i++) {
+         const bar = document.getElementById(`sla-bar-${i}`);
+         if (bar) {
+           // Make the 3rd bar (highlighted) generally taller
+           const minHeight = i === 3 ? 60 : 10;
+           const height = Math.floor(Math.random() * 40) + minHeight;
+           bar.style.height = `${height}%`;
+         }
+      }
+
+      // 3. Token Usage Simulation
+      let currentQueries = parseInt(document.getElementById('stat-query-val').textContent);
+      currentQueries += Math.floor(Math.random() * 3) + 1; // Increment queries by 1 to 3
+      document.getElementById('stat-query-val').textContent = currentQueries;
+      
+      // Simulate tokens in millions increasing slowly
+      let currentTokens = parseFloat(document.getElementById('stat-token-val').textContent);
+      currentTokens += (Math.random() * 0.02);
+      document.getElementById('stat-token-val').textContent = currentTokens.toFixed(2) + 'M';
+
+      // Update token gauge (capped at 75% visual radius of the gauge)
+      const tokenPercentage = Math.min((currentQueries % 500) / 500 * 75, 75); 
+      document.getElementById('stat-token-gauge').setAttribute('stroke-dasharray', `${tokenPercentage}, 100`);
+    }
+
+    // Run the telemetry simulation every 2 seconds
+    setInterval(simulateTelemetry, 2000);
+
+    // --- 5. Dynamic Scroll Reveal Observer ---
+    const revealOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.15 // Trigger when 15% of the element is visible
+    };
+
+    const scrollObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+          observer.unobserve(entry.target); // Only animate once
+        }
+      });
+    }, revealOptions);
+
+    document.querySelectorAll('.scroll-reveal').forEach(el => {
+      scrollObserver.observe(el);
+    });
+
+    // Initial setups
+    updatePrices();
+    simulateTelemetry(); // Run immediately on load
+  </script>
+</body>
+</html>
